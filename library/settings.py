@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'catalogue.apps.CatalogueConfig',
     'rest_framework',
+    "rest_framework.authtoken",
+    "authentications.apps.AuthenticationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -131,7 +133,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'authentications.api.jwt.JWTBaseAuthentication',
+    ],
 }
+
+AUTH_USER_MODEL = 'authentications.Users'
