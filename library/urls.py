@@ -1,22 +1,15 @@
-"""library URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+"""library URL Configuration"""
 from django.contrib import admin
 from django.urls import path, include
+from authentications.api.user_serializer import GoogleLogin
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", include("catalogue.api.urls", namespace="api")),
+    path("user/", include("authentications.api.urls",namespace="users")),
+    path('user/password_reset/', include('django_rest_passwordreset.urls',
+    namespace='password_reset')),
+    path('social-login/google/', GoogleLogin.as_view(), name='google_login'),
+    path("users/request/", include("reqest.api.urls", namespace="request"))
 ]

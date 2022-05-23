@@ -41,7 +41,20 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'catalogue.apps.CatalogueConfig',
     'rest_framework',
+    "rest_framework.authtoken",
+    "authentications.apps.AuthenticationsConfig",
+    "reqest.apps.ReqestConfig",
+    "django_rest_passwordreset",
+    'dj_rest_auth',
+    'allauth',
+    'allauth.account',
+    "dj_rest_auth.registration",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+
 ]
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -131,7 +144,26 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'authentications.api.jwt.JWTBaseAuthentication',
+    ],
 }
+
+AUTH_USER_MODEL = 'authentications.Users'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+SITE_ID = 1
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+    }
+}
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_EMAIL_REQUIRED = False
+REST_USE_JWT = True
