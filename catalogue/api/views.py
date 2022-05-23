@@ -10,7 +10,7 @@ from .catalog_serializer import BookSerializer,CategorySerializer
 
 class BookListView(generics.ListAPIView):
     """Book list API View"""
-    queryset = Book.objects
+    queryset = Book.objects.filter(available=True)
     serializer_class = BookSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
