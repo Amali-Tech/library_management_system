@@ -1,4 +1,5 @@
 """Request book and approval view classes"""
+from datetime import datetime, timedelta
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.authentication import BasicAuthentication
@@ -7,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from authentications.api.views import IsSuperUser
 from reqest.models import RequestBook
 from catalogue.models import Book
+from authentications.models import Users
 from reqest.api.request_serializer import RequestBookSerializer, RequestBookListSerializer, RequestBookDetailSerializer, ReturnBookSerializer, ReturnBookDetailSerializer
 
 
@@ -94,3 +96,32 @@ class ReturnBookDetailView(generics.RetrieveAPIView, generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response({"Unsucessful": serializer.errors})
+
+class AdminViewReturnBookView(generics.ListAPIView):
+    """Admin User Return Book View. This shows all books requested by user
+    and approved books and not Retuned"""
+    queryset = RequestBook.objects.none()
+    serializer_class = ReturnBookSerializer
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = [IsAuthenticated,IsSuperUser]
+    
+    def get_queryset(self):
+        request_try = RequestBook.objects
+        requests = request_try.filter(approval = True,returned=False)
+        request_book_id = requests.values_list("user_id", flat=True)
+        users = Users.objects.filter(id__in=request_book_id)
+        for user in users:
+            current = request_try.filter(user_id=user.id)
+            for i in current:
+                if i.expiry is None:
+                    i.expiry = datetime.min
+                elif i.updated >= i.expiry:
+                    user.update(is_active =False)
+        return requests
+    
+    # def get_queryset(self):
+    #     # users = Users.objects.filter(id=request.data["user"])
+    #     return RequestBook.objects.filter(approval = True,returned=False
+    #     )
+
+
