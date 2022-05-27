@@ -3,6 +3,7 @@ import string
 import random
 
 from django.contrib.auth import authenticate
+
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.generics import GenericAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -10,14 +11,12 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from ..models import Users
-from .user_serializer import LoginSerializer, RegistrationSerializer, ChangePasswordSerializer
-
-
-
+from .user_serializer import LoginSerializer, RegistrationSerializer, ChangePasswordSerializer, GoogleSocialAuthSerializer
 
 
 class IsSuperUser(IsAdminUser):
     """Checking to see if the current user is Admin user authentication"""
+
     def has_permission(self, request, view):
         """When called, gives the user permissions to some views"""
         return bool(request.user and request.user.is_superuser)
@@ -41,7 +40,7 @@ class RegisterAPIView(GenericAPIView):
     authentication_classes = []
 
     def post(self, request):
-        """Posting the registration details to 
+        """Posting the registration details to
         be validaed by the serializer class"""
         serializers = self.serializer_class(data=request.data)
         if serializers.is_valid():
@@ -66,7 +65,8 @@ class LoginAPIView(GenericAPIView):
             if user.is_active:
                 serializer = self.serializer_class(user)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response({"message": "Account deactivated by Libarian"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"message": "Account deactivated by Libarian"},
+            status=status.HTTP_401_UNAUTHORIZED)
         return Response({"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -78,7 +78,7 @@ class ChangePasswordAPIView(UpdateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_object(self, queryset=None):
-        """Getting the current user object to 
+        """Getting the current user object to
         update the fields in the database"""
         return self.request.user
 
@@ -146,3 +146,23 @@ class LibarianDetailView(RetrieveAPIView):
         queryset1 = Users.objects.get(pk=pk)
         queryset1.delete()
         return Response({"Sucessfully Deleted": 'okay'})
+
+
+class GoogleSocialAuthView(GenericAPIView):
+    """Google auth view to login users from google"""
+    authentication_classes = []
+    permission_classes = []
+
+    serializer_class = GoogleSocialAuthSerializer
+
+    def post(self, request):
+        """
+        POST with "auth_token"
+        Send an idtoken as from google to get user information
+        """
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid()
+        print(serializer.data)
+        data = ((serializer.data)['auth_token'])
+        return Response({"User": data}, status=status.HTTP_200_OK)

@@ -1,13 +1,16 @@
 """Authentication Serializer module file"""
+import os
+
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
 from rest_framework import serializers
-
+from rest_framework.exceptions import AuthenticationFailed
 from dj_rest_auth.registration.views import SocialLoginView
 
-
+from . import google
 from ..models import Users
+from .register import register_social_user
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -54,9 +57,18 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         ]
 
 
-class GoogleLogin(SocialLoginView):
+class GoogleSocialAuthSerializer(serializers.Serializer):
     """Google Sign up serializer for users."""
-    authentication_classes = []
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://127.0.0.1:8000"
-    client_class = OAuth2Client
+    auth_token = serializers.CharField()
+
+    def validate_auth_token(self, auth_token):
+        user_data = google.Google.validate(auth_token)
+        try:
+            user_data['sub']
+        except:
+            raise serializers.ValidationError(
+                'The token is invalid or expired. Please login again.')
+        email = user_data['email']
+        name = user_data['name']
+        return register_social_user(
+            email=email, username=name)
