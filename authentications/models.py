@@ -23,17 +23,19 @@ class Libarian(BaseUserManager):
         )
         user.set_password(password)
         user.save(using=self._db)
+        print(user)
         return user
 
     def create_superuser(self, username, Email_Address, password):
         """Creation of a superuser"""
-        user = self.create_user(username=username, email=
-            Email_Address, password=password)
+        user = self.create_user(
+            username=username, email=Email_Address, password=password)
         user.is_admin = True
         user.is_active = True
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
+        return user
 
 
 class Users(AbstractBaseUser):
@@ -55,7 +57,7 @@ class Users(AbstractBaseUser):
         ordering = ("username",)
 
     def __str__(self):
-        return f"{self.Email_Address}"
+        return f"{self.Email_Address}, {self.username}"
 
     def has_perm(self, perm, obj=None):
         """When user registraion has permission, then it is a superuser"""
@@ -68,7 +70,7 @@ class Users(AbstractBaseUser):
     @property
     def token(self):
         """Token generator for user to use to login"""
-        token= jwt.encode({"username":self.username,"email":self.Email_Address,
-        "exp":datetime.utcnow() + timedelta(hours=24)},
-        settings.SECRET_KEY, algorithm="HS256")
+        token = jwt.encode({"username": self.username, "email": self.Email_Address,
+                            "exp": datetime.utcnow() + timedelta(hours=24)},
+                           settings.SECRET_KEY, algorithm="HS256")
         return token
