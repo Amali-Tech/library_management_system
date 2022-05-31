@@ -18,8 +18,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "username",
             "Email_Address",
             "password",
-            "is_active",
-            "is_staff"
         ]
 
 

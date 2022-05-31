@@ -44,7 +44,7 @@ class RegisterAPIView(GenericAPIView):
         be validaed by the serializer class"""
         serializers = self.serializer_class(data=request.data)
         if serializers.is_valid():
-            serializers.save()
+            self.queryset.create_user(**serializers.data)
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -87,7 +87,6 @@ class ChangePasswordAPIView(UpdateAPIView):
         self.object = self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            print(serializer.data)
             if not self.object.check_password(serializer.data.get("old_password")):
                 print(serializer.data.get("old_password"))
                 return Response({"old_password": ["Wrong password."]},
