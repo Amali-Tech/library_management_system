@@ -12,13 +12,13 @@ import jwt
 class Libarian(BaseUserManager):
     """Registration of the user using the BaseUserManager to create a superuser"""
 
-    def create_user(self, email, username, password=None):
+    def create_user(self, Email_Address, username, password=None):
         """Creation of user"""
-        if not email:
+        if not Email_Address:
             raise ValueError("user must have email address")
 
         user = self.model(
-            Email_Address=email,
+            Email_Address=Email_Address,
             username=username,
         )
         user.set_password(password)
@@ -29,7 +29,7 @@ class Libarian(BaseUserManager):
     def create_superuser(self, username, Email_Address, password):
         """Creation of a superuser"""
         user = self.create_user(
-            username=username, email=Email_Address, password=password)
+            username=username, Email_Address=Email_Address, password=password)
         user.is_admin = True
         user.is_active = True
         user.is_staff = True
