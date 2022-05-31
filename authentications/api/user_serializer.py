@@ -27,7 +27,7 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         """Fields to serialize for user to view except ofcourse password"""
         model = Users
-        fields = ("username", "Email_Address", "password", "token")
+        fields = ("username", "password", "token")
         read_only_fields = ["token"]
 
 
