@@ -44,8 +44,6 @@ class RegisterAPIView(GenericAPIView):
         be validaed by the serializer class"""
         serializers = self.serializer_class(data=request.data)
         if serializers.is_valid():
-            print(serializers.data)
-            print(request.data)
             self.queryset.create_user(**serializers.data)
             return Response(serializers.data, status=status.HTTP_201_CREATED)
         return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
