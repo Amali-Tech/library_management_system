@@ -61,7 +61,6 @@ class LoginAPIView(GenericAPIView):
         username = request.data["username"]
 
         user = authenticate(username=username, password=password)
-        print("***** I am working", user)
         if user:
             if user.is_active:
                 serializer = self.serializer_class(user)
