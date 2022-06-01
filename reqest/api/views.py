@@ -9,7 +9,7 @@ from authentications.api.views import IsSuperUser
 from reqest.models import RequestBook
 from catalogue.models import Book
 from authentications.models import Users
-from reqest.api.request_serializer import RequestBookSerializer, RequestBookListSerializer, RequestBookDetailSerializer, ReturnBookSerializer, ReturnBookDetailSerializer
+from reqest.api.request_serializer import RequestBookSerializer, RequestBookListSerializer, RequestBookDetailSerializer, ReturnBookSerializer, ReturnBookDetailSerializer,AdminReturnBookSerializer
 
 
 class RequestBookListView(generics.ListAPIView):
@@ -32,17 +32,23 @@ class RequestBookDetailView(generics.RetrieveAPIView, generics.ListAPIView):
         queryset1 = RequestBook.objects.get(pk=pk)
         serializer = RequestBookDetailSerializer(queryset1, request.data)
         if serializer.is_valid():
-            Book.objects.filter(
-                id=request.data["book"]).update(available=False)
-            serializer.save()
-            return Response(serializer.data)
+            if serializer.validated_data["approval"] is True:
+                Book.objects.filter(
+                    id=request.data["book"]).update(available=False)
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                Book.objects.filter(
+                    id=request.data["book"]).update(available=True)
+                serializer.save()
+                return Response(serializer.data)
         return Response({"Unsucessful": serializer.errors})
 
-    def delete(self, reqest, pk):
+    def delete(self, request, pk ):
         """Delete Request from View API"""
         queryset1 = RequestBook.objects.get(pk=pk)
         queryset1.delete()
-        return Response({"Sucessfully Deleted": 'okay'})
+        return Response({"Sucessfully Deleted": status.HTTP_204_NO_CONTENT})
 
 
 class BookRequestView(generics.CreateAPIView):
@@ -101,10 +107,10 @@ class AdminViewReturnBookView(generics.ListAPIView):
     """Admin User Return Book View. This shows all books requested by user
     and approved books and not Retuned"""
     queryset = RequestBook.objects.none()
-    serializer_class = ReturnBookSerializer
+    serializer_class = AdminReturnBookSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = [IsAuthenticated,IsSuperUser]
-    
+
     def get_queryset(self):
         request_try = RequestBook.objects
         requests = request_try.filter(approval = True,returned=False)
@@ -118,10 +124,32 @@ class AdminViewReturnBookView(generics.ListAPIView):
                 elif i.updated >= i.expiry:
                     user.update(is_active =False)
         return requests
+
+class AdminViewReturnedBooksToApproveView(generics.ListAPIView,generics.UpdateAPIView):
+    """Admin User Return Book View. This shows all books requested by user
+    and approved books and not Retuned"""
+    queryset = RequestBook.objects.filter(approval = True,returned=True)
+    serializer_class = AdminReturnBookSerializer
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = [IsAuthenticated,IsSuperUser]
     
-    # def get_queryset(self):
-    #     # users = Users.objects.filter(id=request.data["user"])
-    #     return RequestBook.objects.filter(approval = True,returned=False
-    #     )
-
-
+class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.UpdateAPIView):
+    """Admin User Return Book View. This shows all books requested by user
+    and approved books and not Retuned"""
+    queryset = RequestBook.objects.filter(approval = True,returned=True)
+    serializer_class = AdminReturnBookSerializer
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = [IsAuthenticated,IsSuperUser]
+    
+    def put(self, request, pk):
+        """Put method for HTTP PUT request from RetunrBookDetailView for user to update that
+        they want to return a book."""
+        queryset1 = RequestBook.objects.get(pk=pk)
+        serializer = AdminReturnBookSerializer(queryset1, request.data)
+        if serializer.is_valid():
+            print(serializer.validated_data["approval"])
+            Book.objects.filter(id=request.data["book"]).update(available=True)
+            serializer.save()
+            return Response(serializer.data)
+        return Response({"Unsucessful": serializer.errors})
+    

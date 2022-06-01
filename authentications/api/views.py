@@ -10,8 +10,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from ..models import Users
-from .user_serializer import LoginSerializer, RegistrationSerializer, ChangePasswordSerializer, GoogleSocialAuthSerializer
+from authentications.models import Users
+from authentications.api.user_serializer import LoginSerializer, RegistrationSerializer, ChangePasswordSerializer, GoogleSocialAuthSerializer, LibarianRegistrationSerializer
 
 
 class IsSuperUser(IsAdminUser):
@@ -66,7 +66,7 @@ class LoginAPIView(GenericAPIView):
                 serializer = self.serializer_class(user)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response({"message": "Account deactivated by Libarian"},
-            status=status.HTTP_401_UNAUTHORIZED)
+                            status=status.HTTP_401_UNAUTHORIZED)
         return Response({"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -111,17 +111,18 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
         random.shuffle(password)
         return "".join(password)
     queryset = Users.objects
-    serializer_class = RegistrationSerializer
+    serializer_class = LibarianRegistrationSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated, IsSuperUser)
 
     def post(self, request):
         """Post method for HTTP POST request for users to be created"""
-
-        serializer = RegistrationSerializer(data=request.data)
+        serializer = LibarianRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(password=self.generate_random_password())
-            return Response({"Added Libarian": serializer.data})
+            password = self.generate_random_password()
+            self.queryset.create_superuser(**serializer.data, password=password)
+            return Response({"status": "success", "data": {"username": serializer.data["username"],
+            "Email_Address": serializer.data["Email_Address"], "password": password}})
         return Response(serializer.errors)
 
 
@@ -144,7 +145,7 @@ class LibarianDetailView(RetrieveAPIView):
         """Delete User from database API"""
         queryset1 = Users.objects.get(pk=pk)
         queryset1.delete()
-        return Response({"Sucessfully Deleted": 'okay'})
+        return Response({"Sucessfully Deleted": status.HTTP_204_NO_CONTENT})
 
 
 class GoogleSocialAuthView(GenericAPIView):
@@ -162,6 +163,5 @@ class GoogleSocialAuthView(GenericAPIView):
 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid()
-        print(serializer.data)
         data = ((serializer.data)['auth_token'])
         return Response({"User": data}, status=status.HTTP_200_OK)

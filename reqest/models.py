@@ -13,6 +13,7 @@ class RequestBook(models.Model):
     request = models.BooleanField(default=True)
     approval = models.BooleanField(default=False)
     returned = models.BooleanField(default=False)
+    approve_return = models.BooleanField(default=False)
     updated = models.DateTimeField(auto_now=True)
     expiry = models.DateTimeField(null=True)
     class Meta:

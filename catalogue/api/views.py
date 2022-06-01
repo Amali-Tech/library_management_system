@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 from ..models import Book, Category
 from .catalog_serializer import BookSerializer,CategorySerializer
@@ -38,11 +39,11 @@ class BookDetailView(generics.RetrieveAPIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self, pk):
+    def delete(self, request, pk):
         """Delete Book from catalog View API"""
         queryset1 = Book.objects.get(pk=pk)
         queryset1.delete()
-        return Response({"Sucessfully Deleted":'okay'})
+        return Response({"Sucessfully Deleted":status.HTTP_204_NO_CONTENT})
 
 class CategoryView(generics.ListAPIView):
     """Catalogue list API View"""
@@ -74,8 +75,8 @@ class CategoryDetailView(generics.RetrieveAPIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self,pk):
+    def delete(self,request,pk):
         """Delete Catalogue from catalog View API with ID"""
         querry = Category.objects.get(pk=pk)
         querry.delete()
-        return Response({"Successfully Deleted": "Okay"})
+        return Response({"Successfully Deleted": status.HTTP_204_NO_CONTENT})

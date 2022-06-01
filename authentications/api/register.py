@@ -29,7 +29,7 @@ def register_social_user( email, username):
 
     else:
         user = {
-            'username': generate_username(username), 'email': email,
+            'username': generate_username(username), 'Email_Address': email,
             'password': os.environ.get('SOCIAL_SECRET')}
         user = Users.objects.create_user(**user)
         user.save()
