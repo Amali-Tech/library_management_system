@@ -5,6 +5,7 @@ from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
+from authentications.api.views import IsSuperUser
 from ..models import Book, Category
 from .catalog_serializer import BookSerializer,CategorySerializer
 
@@ -21,7 +22,7 @@ class BookListView(generics.ListAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response({"Added Book":request.data})
-        return Response({"Was not able to add category":request.data})
+        return Response({"Was not able to add book":request.data})
 
 
 class BookDetailView(generics.RetrieveAPIView):
@@ -50,7 +51,7 @@ class CategoryView(generics.ListAPIView):
     queryset = Category.objects
     serializer_class = CategorySerializer
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,IsSuperUser)
     def post(self, request):
         """Post method for HTTP POST request from Catalogue View"""
         serializer = CategorySerializer(data = request.data)
@@ -65,7 +66,7 @@ class CategoryDetailView(generics.RetrieveAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,IsSuperUser)
 
     def put(self,request,pk):
         """Put method for HTTP PUT request from CategoryDetailView"""
