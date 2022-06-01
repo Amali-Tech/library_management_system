@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from authentications.models import Users
-from authentications.api.user_serializer import LoginSerializer, RegistrationSerializer, ChangePasswordSerializer, GoogleSocialAuthSerializer, LibarianRegistrationSerializer
+from authentications.api.user_serializer import LoginSerializer, RegistrationSerializer, AdminUpdateSerializer,ChangePasswordSerializer, GoogleSocialAuthSerializer, LibarianRegistrationSerializer
 
 
 class IsSuperUser(IsAdminUser):
@@ -128,14 +128,14 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
 class LibarianDetailView(RetrieveAPIView):
     """Superuser checking the details of other users"""
     queryset = Users.objects.all()
-    serializer_class = RegistrationSerializer
+    serializer_class = AdminUpdateSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def put(self, request, pk):
         """Put method for superuser to control user accounts"""
         queryset1 = Users.objects.get(pk=pk)
-        serializer = RegistrationSerializer(queryset1, request.data)
+        serializer = AdminUpdateSerializer(queryset1, request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

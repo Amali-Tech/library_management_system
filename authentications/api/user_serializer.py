@@ -8,6 +8,17 @@ from .register import register_social_user
 
 class RegistrationSerializer(serializers.ModelSerializer):
     """User Registration Serializer"""
+    class Meta:
+        """Pre display all fields except password field since it is write only"""
+        model = Users
+        fields = [
+            "id",
+            "username",
+            "Email_Address",
+            'password'
+        ]
+class AdminUpdateSerializer(serializers.ModelSerializer):
+    """User Registration Serializer"""
 
     class Meta:
         """Pre display all fields except password field since it is write only"""
