@@ -16,8 +16,21 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "Email_Address",
-            "password",
+            "is_active"
         ]
+
+class LibarianRegistrationSerializer(serializers.ModelSerializer):
+    """Libarian Registration Serializer"""
+
+    class Meta:
+        """Pre display all fields except password field since it is write only"""
+        model = Users
+        fields = [
+            "id",
+            "username",
+            "Email_Address",
+        ]
+
 
 
 class LoginSerializer(serializers.ModelSerializer):

@@ -39,6 +39,13 @@ class ReturnBookSerializer(serializers.ModelSerializer):
         model = RequestBook
         fields = ["id", "book", "approval", "returned"]
 
+class AdminReturnBookSerializer(serializers.ModelSerializer):
+    """Admin checking returned books to approve serializer class"""
+    class Meta:
+        """Pre displayed for user to see and update"""
+        model = RequestBook
+        fields = ["id", "book", "approval", "returned", "approve_return"]
+
 
 class ReturnBookDetailSerializer(serializers.ModelSerializer):
     """User Return Book view"""

@@ -18,7 +18,6 @@ def generate_username(name):
 def register_social_user( email, username):
     """Registers a new social user to the database"""
     filtered_user_by_email = Users.objects.filter(Email_Address=email)
-    print(filtered_user_by_email)
 
     if filtered_user_by_email.exists():
         registered_user = filtered_user_by_email[0]
@@ -29,7 +28,7 @@ def register_social_user( email, username):
 
     else:
         user = {
-            'username': generate_username(username), 'email': email,
+            'username': generate_username(username), 'Email_Address': email,
             'password': os.environ.get('SOCIAL_SECRET')}
         user = Users.objects.create_user(**user)
         user.save()

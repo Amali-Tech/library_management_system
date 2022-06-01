@@ -3,7 +3,9 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
+from authentications.api.views import IsSuperUser
 from ..models import Book, Category
 from .catalog_serializer import BookSerializer,CategorySerializer
 
@@ -20,7 +22,7 @@ class BookListView(generics.ListAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response({"Added Book":request.data})
-        return Response({"Was not able to add category":request.data})
+        return Response({"Was not able to add book":request.data})
 
 
 class BookDetailView(generics.RetrieveAPIView):
@@ -38,18 +40,18 @@ class BookDetailView(generics.RetrieveAPIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self, pk):
+    def delete(self, request, pk):
         """Delete Book from catalog View API"""
         queryset1 = Book.objects.get(pk=pk)
         queryset1.delete()
-        return Response({"Sucessfully Deleted":'okay'})
+        return Response({"Sucessfully Deleted":status.HTTP_204_NO_CONTENT})
 
 class CategoryView(generics.ListAPIView):
     """Catalogue list API View"""
     queryset = Category.objects
     serializer_class = CategorySerializer
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,IsSuperUser)
     def post(self, request):
         """Post method for HTTP POST request from Catalogue View"""
         serializer = CategorySerializer(data = request.data)
@@ -64,7 +66,7 @@ class CategoryDetailView(generics.RetrieveAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,IsSuperUser)
 
     def put(self,request,pk):
         """Put method for HTTP PUT request from CategoryDetailView"""
@@ -74,8 +76,8 @@ class CategoryDetailView(generics.RetrieveAPIView):
             serializer.save()
             return Response(serializer.data)
 
-    def delete(self,pk):
+    def delete(self,request,pk):
         """Delete Catalogue from catalog View API with ID"""
         querry = Category.objects.get(pk=pk)
         querry.delete()
-        return Response({"Successfully Deleted": "Okay"})
+        return Response({"Successfully Deleted": status.HTTP_204_NO_CONTENT})
