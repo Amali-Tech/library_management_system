@@ -88,7 +88,6 @@ class ChangePasswordAPIView(UpdateAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             if not self.object.check_password(serializer.data.get("old_password")):
-                print(serializer.data.get("old_password"))
                 return Response({"old_password": ["Wrong password."]},
                                 status=status.HTTP_400_BAD_REQUEST)
             self.object.set_password(serializer.data.get("new_password"))
@@ -160,8 +159,7 @@ class GoogleSocialAuthView(GenericAPIView):
         POST with "auth_token"
         Send an idtoken as from google to get user information
         """
-
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid()
         data = ((serializer.data)['auth_token'])
-        return Response({"User": data}, status=status.HTTP_200_OK)
+        return Response({"User": data}, status=status.HTTP_201_CREATED)

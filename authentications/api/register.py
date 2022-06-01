@@ -18,7 +18,6 @@ def generate_username(name):
 def register_social_user( email, username):
     """Registers a new social user to the database"""
     filtered_user_by_email = Users.objects.filter(Email_Address=email)
-    print(filtered_user_by_email)
 
     if filtered_user_by_email.exists():
         registered_user = filtered_user_by_email[0]

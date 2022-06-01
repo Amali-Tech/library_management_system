@@ -147,7 +147,6 @@ class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.Up
         queryset1 = RequestBook.objects.get(pk=pk)
         serializer = AdminReturnBookSerializer(queryset1, request.data)
         if serializer.is_valid():
-            print(serializer.validated_data["approval"])
             Book.objects.filter(id=request.data["book"]).update(available=True)
             serializer.save()
             return Response(serializer.data)
