@@ -15,6 +15,6 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     """Registering Book model class as Admin model"""
-    list_display = ("category", "title", "slug", "available",)
+    list_display = ("category", "title", "slug", "is_available",)
     list_filter = ["title"]
     prepopulated_fields = {"slug": ("title",)}

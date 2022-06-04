@@ -10,22 +10,22 @@ class RequestBook(models.Model):
     """Model for Request Book"""
     user = models.ForeignKey(Users,on_delete=models.CASCADE, related_name="request_book")
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="books_to_request")
-    request = models.BooleanField(default=True)
-    approval = models.BooleanField(default=False)
-    returned = models.BooleanField(default=False)
-    approve_return = models.BooleanField(default=False)
+    is_requested = models.BooleanField(default=True)
+    is_approved = models.BooleanField(default=False)
+    is_returned = models.BooleanField(default=False)
+    is_approved_return = models.BooleanField(default=False)
     updated = models.DateTimeField(auto_now=True)
     expiry = models.DateTimeField(null=True)
     class Meta:
         """Pre ordered and displayed by Approval"""
-        ordering = ("approval",)
+        ordering = ("is_approved",)
     def __str__(self):
         return f"{self.user},{self.book}"
 
     def save(self, *args, **kwargs):
         """Overiding the save method of Model
         to save the 1 month expiry date after approval by user"""
-        if self.approval is False:
+        if self.is_approved is False:
             self.expiry = datetime.max
             super(RequestBook, self).save(*args, **kwargs)
         else:

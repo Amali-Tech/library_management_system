@@ -14,7 +14,7 @@ from reqest.api.request_serializer import RequestBookSerializer, RequestBookList
 
 class RequestBookListView(generics.ListAPIView):
     """Admin User Request Book list API View"""
-    queryset = RequestBook.objects.filter(request=True, approval=False)
+    queryset = RequestBook.objects.filter(is_requested=True, is_approved=False)
     serializer_class = RequestBookListSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated, IsSuperUser)
@@ -32,14 +32,14 @@ class RequestBookDetailView(generics.RetrieveAPIView, generics.ListAPIView):
         queryset1 = RequestBook.objects.get(pk=pk)
         serializer = RequestBookDetailSerializer(queryset1, request.data)
         if serializer.is_valid():
-            if serializer.validated_data["approval"] is True:
+            if serializer.validated_data["is_approved"] is True:
                 Book.objects.filter(
-                    id=request.data["book"]).update(available=False)
+                    id=request.data["book"]).update(is_available=False)
                 serializer.save()
                 return Response(serializer.data)
             else:
                 Book.objects.filter(
-                    id=request.data["book"]).update(available=True)
+                    id=request.data["book"]).update(is_available=True)
                 serializer.save()
                 return Response(serializer.data)
         return Response({"Unsucessful": serializer.errors})
@@ -62,7 +62,7 @@ class BookRequestView(generics.CreateAPIView):
         """POST Request for user to request a book. If book is not available,
         A Book not available Response would be rendered."""
         serializers = self.serializer_class(data=request.data)
-        if Book.objects.get(id=request.data["book"]).available:
+        if Book.objects.get(id=request.data["book"]).is_available:
             if serializers.is_valid():
                 serializers.save(user=self.request.user)
                 return Response({"Book Requested Successfully": serializers.data},
@@ -81,7 +81,7 @@ class ReturnBookView(generics.ListAPIView):
 
     def get_queryset(self):
         return RequestBook.objects.filter(
-            user=self.request.user, returned=False
+            user=self.request.user, is_returned=False
         )
 
 
@@ -98,7 +98,7 @@ class ReturnBookDetailView(generics.RetrieveAPIView, generics.UpdateAPIView):
         queryset1 = RequestBook.objects.get(pk=pk)
         serializer = ReturnBookDetailSerializer(queryset1, request.data)
         if serializer.is_valid():
-            Book.objects.filter(id=request.data["book"]).update(available=True)
+            Book.objects.filter(id=request.data["book"]).update(is_available=True)
             serializer.save()
             return Response(serializer.data)
         return Response({"Unsucessful": serializer.errors})
@@ -113,7 +113,7 @@ class AdminViewReturnBookView(generics.ListAPIView):
 
     def get_queryset(self):
         request_try = RequestBook.objects
-        requests = request_try.filter(approval = True,returned=False)
+        requests = request_try.filter(is_approved = True,is_returned=False)
         request_book_id = requests.values_list("user_id", flat=True)
         users = Users.objects.filter(id__in=request_book_id)
         for user in users:
@@ -128,7 +128,7 @@ class AdminViewReturnBookView(generics.ListAPIView):
 class AdminViewReturnedBooksToApproveView(generics.ListAPIView,generics.UpdateAPIView):
     """Admin User Return Book View. This shows all books requested by user
     and approved books and not Retuned"""
-    queryset = RequestBook.objects.filter(approval = True,returned=True)
+    queryset = RequestBook.objects.filter(is_approved = True,is_returned=True)
     serializer_class = AdminReturnBookSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = [IsAuthenticated,IsSuperUser]
@@ -136,7 +136,7 @@ class AdminViewReturnedBooksToApproveView(generics.ListAPIView,generics.UpdateAP
 class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.UpdateAPIView):
     """Admin User Return Book View. This shows all books requested by user
     and approved books and not Retuned"""
-    queryset = RequestBook.objects.filter(approval = True,returned=True)
+    queryset = RequestBook.objects.filter(is_approved = True,is_returned=True)
     serializer_class = AdminReturnBookSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = [IsAuthenticated,IsSuperUser]
@@ -147,8 +147,7 @@ class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.Up
         queryset1 = RequestBook.objects.get(pk=pk)
         serializer = AdminReturnBookSerializer(queryset1, request.data)
         if serializer.is_valid():
-            Book.objects.filter(id=request.data["book"]).update(available=True)
+            Book.objects.filter(id=request.data["book"]).update(is_available=True)
             serializer.save()
             return Response(serializer.data)
         return Response({"Unsucessful": serializer.errors})
-    

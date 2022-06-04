@@ -12,10 +12,18 @@ from .catalog_serializer import BookSerializer,CategorySerializer
 
 class BookListView(generics.ListAPIView):
     """Book list API View"""
-    queryset = Book.objects.filter(available=True)
+    queryset = Book.objects.all()
     serializer_class = BookSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
+
+
+class AdminBookListView(generics.ListAPIView):
+    """Book list API View"""
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    authentication_classes = (BasicAuthentication,)
+    permission_classes = (IsAuthenticated,IsSuperUser)
     def post(self, request):
         """Post method for HTTP POST request from Booklist View"""
         serializer = BookSerializer(data = request.data)

@@ -1,17 +1,21 @@
 """Authentication views for users and admin"""
-import string
+import ast
 import random
+import string
 
+from authentications.api.user_serializer import (
+    AdminUpdateSerializer, ChangePasswordSerializer,
+    GoogleSocialAuthSerializer, LibarianRegistrationSerializer,
+    LoginSerializer, RegistrationSerializer)
+from authentications.models import GeneratedPasswords, Users
 from django.contrib.auth import authenticate
-
 from rest_framework.authentication import BasicAuthentication
-from rest_framework.generics import GenericAPIView, UpdateAPIView, ListAPIView, RetrieveAPIView
+from rest_framework.generics import (GenericAPIView, ListAPIView,
+                                     RetrieveAPIView, UpdateAPIView)
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from authentications.models import Users
-from authentications.api.user_serializer import LoginSerializer, RegistrationSerializer, AdminUpdateSerializer,ChangePasswordSerializer, GoogleSocialAuthSerializer, LibarianRegistrationSerializer
+from google.auth.exceptions import TransportError
 
 
 class IsSuperUser(IsAdminUser):
@@ -24,13 +28,22 @@ class IsSuperUser(IsAdminUser):
 
 class AuthUserAPIView(GenericAPIView):
     """When user logs in with a token, their identity can be determines"""
+
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         """Getting the current logged in user info"""
         user = request.user
-        serializer = RegistrationSerializer(user)
-        return Response({"user": serializer.data})
+        serializer = AdminUpdateSerializer(user)
+        print(serializer.data)
+        return Response({
+            "status":"success",
+            "details": "User details found",
+            "data":{
+                "id":serializer.data["id"], 
+                "username":serializer.data["username"],
+                "email_address":serializer.data["email_address"],
+                "libarian": serializer.data["is_superuser"]}})
 
 
 class RegisterAPIView(GenericAPIView):
@@ -45,36 +58,71 @@ class RegisterAPIView(GenericAPIView):
         serializers = self.serializer_class(data=request.data)
         if serializers.is_valid():
             self.queryset.create_user(**serializers.data)
-            return Response(serializers.data, status=status.HTTP_201_CREATED)
-        return Response(serializers.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "status":"success",
+                "details":"User created successfully",
+                "data":{
+                    "email_address":serializers.data["email_address"],
+                    "username":serializers.data["username"]}})
+        return Response({
+            "status":"failure",
+            "details":serializers.errors})
 
 
 class LoginAPIView(GenericAPIView):
     """User and Admin login view endpoint"""
     queryset = Users.objects
+    passqueryset = GeneratedPasswords.objects
     serializer_class = LoginSerializer
     authentication_classes = []
 
+
     def post(self, request):
         """Posting the details to be authenticated for access and token"""
-        password = request.data["password"]
-        username = request.data["username"]
+        try:
+            password = request.data["password"]
+            email_address = request.data["email_address"]
+            try:
+                if self.passqueryset.get(password=password):
+                    return Response({
+                    "status":"failure",
+                    "details":"Change Password"
+                })
+            except GeneratedPasswords.DoesNotExist:
+                pass
+        except KeyError:
+            return Response({
+                "status":"failure",
+                "details":"Email and password fields required"
+            })
 
-        user = authenticate(username=username, password=password)
-        if user:
-            if user.is_active:
-                serializer = self.serializer_class(user)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response({"message": "Account deactivated by Libarian"},
-                            status=status.HTTP_401_UNAUTHORIZED)
-        return Response({"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            user = authenticate(email_address=email_address, password=password)
+            if user:
+                return Response({
+                    "status":"success",
+                    "details":"user logged in successfully",
+                    "data":{
+                        "email_address":user.email_address,
+                        "token":user.token,
+                        "libarian":user.is_superuser}})
+            return Response({
+                "status":"failure",
+                "details":"Invalid credentials"})
+        except Users.DoesNotExist:
+            return Response({
+                "status":"failure",
+                "details":"User does not exits"
+            })
 
 
 class ChangePasswordAPIView(UpdateAPIView):
     """User change password view endpoint where both users can change their password"""
     model = Users
     queryset = Users.objects
+    passqueryset = GeneratedPasswords.objects
     serializer_class = ChangePasswordSerializer
+    authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def get_object(self, queryset=None):
@@ -86,14 +134,35 @@ class ChangePasswordAPIView(UpdateAPIView):
         """Making a PUT request to change passowrd by both user and superuser"""
         self.object = self.get_object()
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            if not self.object.check_password(serializer.data.get("old_password")):
-                return Response({"old_password": ["Wrong password."]},
-                                status=status.HTTP_400_BAD_REQUEST)
-            self.object.set_password(serializer.data.get("new_password"))
-            self.object.save()
-            return Response({"Status": "Success", "Message": "Password changed successfully"})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if serializer.is_valid():
+                if not self.object.check_password(serializer.data.get("old_password")):
+                    return Response({
+                        "status": "Wrong old password",
+                        "details": "Password change unsuccessful"})
+                self.object.set_password(serializer.data.get("new_password"))
+                self.object.save()
+                try:
+                    password = self.passqueryset.get(password=serializer.data.get("old_password"))
+                    if password:
+                        password.delete()
+                except GeneratedPasswords.DoesNotExist:
+                    pass
+                return Response({
+                    "status":"success",
+                    "details": "Password changed successfully",
+                    "data": {
+                        "Username":self.object.username,
+                        "email_address":self.object.email_address,
+                        "is_libarian": self.object.is_superuser}})
+            return Response({
+                "status": "failure",
+                "details": serializer.errors})
+        except KeyError:
+            return Response({
+                "status":"failure",
+                "details":"change password failed"
+            })
 
 
 class LibarianRegisterListView(ListAPIView, GenericAPIView):
@@ -102,27 +171,41 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
 
     def generate_random_password(self):
         """Generate random alphanumeric passwords for new user to be changed afterwards"""
-        length = 10
+        length = 25
         random.shuffle(self.characters)
         password = []
         for _ in range(length):
             password.append(random.choice(self.characters))
         random.shuffle(password)
         return "".join(password)
-    queryset = Users.objects
-    serializer_class = LibarianRegistrationSerializer
+
+
+    queryset = Users.objects.filter(is_superuser=True)
+    serializer_class = AdminUpdateSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated, IsSuperUser)
 
     def post(self, request):
         """Post method for HTTP POST request for users to be created"""
         serializer = LibarianRegistrationSerializer(data=request.data)
+        queryset = Users.objects
+
         if serializer.is_valid():
             password = self.generate_random_password()
-            self.queryset.create_superuser(**serializer.data, password=password)
-            return Response({"status": "success", "data": {"username": serializer.data["username"],
-            "Email_Address": serializer.data["Email_Address"], "password": password}})
-        return Response(serializer.errors)
+            queryset.create_superuser(**serializer.data, password=password)
+            password_save = GeneratedPasswords(password= password)
+            password_save.save()
+            return Response({
+                "status": "success",
+                "details":"Libarian registered successfully",
+                "data": {
+                    "username": serializer.data["username"],
+                    "email_address": serializer.data["email_address"],
+                    "password": password}})
+        return Response({
+            "status": "failure",
+            "details": serializer.errors
+            })
 
 
 class LibarianDetailView(RetrieveAPIView):
@@ -134,17 +217,34 @@ class LibarianDetailView(RetrieveAPIView):
 
     def put(self, request, pk):
         """Put method for superuser to control user accounts"""
-        queryset1 = Users.objects.get(pk=pk)
-        serializer = AdminUpdateSerializer(queryset1, request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+        try:
+            queryset1 = Users.objects.get(pk=pk)
+            serializer = AdminUpdateSerializer(queryset1, request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return Response({
+                    "status":"failure",
+                    "details":serializer.errors})
+        except Users.DoesNotExist:
+            return Response({
+                "status":"failure",
+                "details":"User not found"})
 
     def delete(self, reqest, pk):
         """Delete User from database API"""
-        queryset1 = Users.objects.get(pk=pk)
-        queryset1.delete()
-        return Response({"Sucessfully Deleted": status.HTTP_204_NO_CONTENT})
+        try:
+            queryset1 = Users.objects.get(pk=pk)
+            queryset1.delete()
+            return Response({
+                "status": "success",
+                "details": "User deleted successfully",
+            })
+        except Users.DoesNotExist:
+            return Response({
+                "status":"failure",
+                "datails":"User does not exist"})
 
 
 class GoogleSocialAuthView(GenericAPIView):
@@ -160,6 +260,23 @@ class GoogleSocialAuthView(GenericAPIView):
         Send an idtoken as from google to get user information
         """
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid()
-        data = ((serializer.data)['auth_token'])
-        return Response({"User": data}, status=status.HTTP_201_CREATED)
+        try:
+            serializer.is_valid()
+            data = ast.literal_eval((serializer.data)['auth_token'])
+            return Response({
+                "status":"success",
+                "detail":"User signup successful",
+                "data":{
+                "username": data["username"],
+                "email_address":data["email"],
+                "token":data["token"]}})
+        except KeyError:
+            return Response({
+                "status":"failure",
+                "details":"invalid token"
+            })
+        except TransportError:
+            return Response({
+                "status":"failure",
+                "details":"Token fetch failed please check connection"
+            })

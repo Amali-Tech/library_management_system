@@ -1,4 +1,5 @@
 """Authentication Serializer module file"""
+from django.forms import ValidationError
 from rest_framework import serializers
 
 from . import google
@@ -14,7 +15,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
-            "Email_Address",
+            "email_address",
             'password'
         ]
 class AdminUpdateSerializer(serializers.ModelSerializer):
@@ -26,8 +27,9 @@ class AdminUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
-            "Email_Address",
-            "is_active"
+            "email_address",
+            "is_active",
+            "is_superuser"
         ]
 
 class LibarianRegistrationSerializer(serializers.ModelSerializer):
@@ -39,7 +41,7 @@ class LibarianRegistrationSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
-            "Email_Address",
+            "email_address",
         ]
 
 
@@ -51,7 +53,7 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         """Fields to serialize for user to view except ofcourse password"""
         model = Users
-        fields = ("username", "password", "token")
+        fields = ("email_address", "password")
         read_only_fields = ["token"]
 
 
@@ -64,8 +66,6 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         """Pre displayed fields for user"""
         model = Users
         fields = [
-            "username",
-            "Email_Address",
             "old_password",
             "new_password"
         ]
@@ -76,10 +76,11 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
     auth_token = serializers.CharField()
 
     def validate_auth_token(self, auth_token):
+        """Validating the auth token"""
         user_data = google.Google.validate(auth_token)
         try:
             user_data['sub']
-        except:
+        except ValidationError:
             raise serializers.ValidationError(
                 'The token is invalid or expired. Please login again.')
         email = user_data['email']

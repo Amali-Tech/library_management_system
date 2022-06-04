@@ -9,7 +9,7 @@ class BookSerializer(serializers.ModelSerializer):
         """Modeling from the Book model class"""
         model = Book
         fields = ["id", "category", "title",
-                  "description", "available", "image"]
+                  "description", "is_available", "image"]
 
 
 class CategorySerializer(serializers.ModelSerializer):

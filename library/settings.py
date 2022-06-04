@@ -17,7 +17,8 @@ import django_heroku
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework_swagger",
     'catalogue.apps.CatalogueConfig',
     'rest_framework',
     "rest_framework.authtoken",
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     "reqest.apps.ReqestConfig",
     "django_rest_passwordreset",
     'dj_rest_auth',
+    'drf_yasg',
 ]
 
 
@@ -75,6 +78,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries' : {
+                'staticfiles': 'django.templatetags.static',}
         },
     },
 ]
@@ -88,12 +93,9 @@ WSGI_APPLICATION = 'library.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DATABASE_NAME'),
-        'USER': os.getenv('POSTGRES_USER'),
-        'PASSWORD': os.getenv('POSTGRES_DATABASE_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_DATABASE_HOST'),
-        'PORT': '',
-        'ATOMIC_REQUESTS': True,
+        'NAME': 'library1',
+        'USER': 'postgres',
+        'PASSWORD': os.getenv('DATABASE_PASSWORD')
 
     }
 }

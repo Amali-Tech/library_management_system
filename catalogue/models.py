@@ -34,8 +34,8 @@ class Book(models.Model):
     title = models.CharField(max_length=200, db_index=True)
     slug = models.SlugField(max_length=200, db_index=True)
     description = models.TextField()
-    available = models.BooleanField(default=False)
-    image = models.URLField()
+    is_available = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='images/%Y/%m/%d',blank=True)
 
     class Meta:
         """Ordering by title"""
