@@ -35,7 +35,6 @@ class AuthUserAPIView(GenericAPIView):
         """Getting the current logged in user info"""
         user = request.user
         serializer = AdminUpdateSerializer(user)
-        print(serializer.data)
         return Response({
             "status":"success",
             "details": "User details found",
@@ -152,7 +151,7 @@ class ChangePasswordAPIView(UpdateAPIView):
                     "status":"success",
                     "details": "Password changed successfully",
                     "data": {
-                        "Username":self.object.username,
+                        "username":self.object.username,
                         "email_address":self.object.email_address,
                         "libarian": self.object.is_superuser}})
             return Response({
@@ -180,7 +179,7 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
         return "".join(password)
 
 
-    queryset = Users.objects.filter(is_superuser=True)
+    queryset = Users.objects.all()
     serializer_class = AdminUpdateSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated, IsSuperUser)
@@ -211,17 +210,15 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
 class LibarianDetailView(RetrieveAPIView,UpdateAPIView):
     """Superuser checking the details of other users"""
     queryset = Users.objects.all()
-    serializer_class = AdminUpdateDetailSerializer
+    serializer_class = AdminUpdateSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def update(self, request, pk,*args, **kwargs):
         """Put method for superuser to control user accounts"""
         try:
-            serializer = self.serializer_class(data = request.data)
-            print(serializer)
+            serializer = AdminUpdateDetailSerializer(data = request.data)
             if serializer.is_valid():
-                print(serializer.data)
                 queryset1 = Users.objects.filter(pk=pk)
                 if queryset1:
                     queryset1.update(is_active = serializer.validated_data["is_active"])

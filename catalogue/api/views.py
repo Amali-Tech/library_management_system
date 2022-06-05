@@ -89,7 +89,10 @@ class BookDetailView(generics.RetrieveAPIView):
         try:
             queryset1 = Book.objects.get(pk=pk)
             queryset1.delete()
-            return Response({"Sucessfully Deleted": status.HTTP_204_NO_CONTENT})
+            return Response({
+                "status": "success",
+                "details":"book deleted"
+            })
         except Book.DoesNotExist:
             return Response({
                 "status": "failure",
@@ -160,7 +163,9 @@ class CategoryDetailView(generics.RetrieveAPIView):
         try:
             querry = Category.objects.get(pk=pk)
             querry.delete()
-            return Response({"Successfully Deleted": status.HTTP_204_NO_CONTENT})
+            return Response({
+                "status": "success",
+                "details":"category deleted"})
         except Category.DoesNotExist:
             return Response({
                 "status": "failure",
