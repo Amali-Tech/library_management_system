@@ -53,7 +53,7 @@ class BookDetailView(generics.RetrieveAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     authentication_classes = (BasicAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,IsSuperUser)
 
     def put(self, request, pk):
         """Put method for HTTP PUT request from BookDetailView"""

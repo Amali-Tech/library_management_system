@@ -39,5 +39,5 @@ def register_social_user( email, username):
                 'username': user.username,
                 'token': user.token
             }
-    except:
+    except Users.DoesNotExist:
         pass

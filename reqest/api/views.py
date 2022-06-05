@@ -1,17 +1,18 @@
 """Request book and approval view classes"""
-from unicodedata import category
+from datetime import datetime
 
 from authentications.api.views import IsSuperUser
 from authentications.models import Users
 from catalogue.models import Book
-from reqest.api.request_serializer import (AdminReturnBookSerializer,
+from reqest.api.request_serializer import (AdminApprovedButNotReturnedBook,
+                                           AdminRequestBookDetailSerializer,
+                                           AdminReturnBookSerializer,
                                            RequestBookDetailSerializer,
                                            RequestBookListSerializer,
                                            RequestBookSerializer,
                                            ReturnBookDetailGetSerializer,
                                            ReturnBookDetailSerializer,
-                                           ReturnBookGetSerializer,
-                                           ReturnBookSerializer)
+                                           ReturnBookGetSerializer)
 from reqest.models import RequestBook
 from rest_framework import generics, status
 from rest_framework.authentication import BasicAuthentication
@@ -38,30 +39,61 @@ class RequestBookDetailView(generics.RetrieveAPIView, generics.ListAPIView):
         """Put method for HTTP PUT request from BookRequestDetailView"""
         try:
             queryset1 = RequestBook.objects.get(pk=pk)
-            serializer = RequestBookDetailSerializer(queryset1, request.data)
+            serializer = AdminRequestBookDetailSerializer(queryset1, data =request.data)
             if serializer.is_valid():
+                book_name = Book.objects.get(id=queryset1.book_id)
+                book  =Book.objects.filter(id=queryset1.book_id)
                 if serializer.validated_data["is_approved"] is True:
-                    Book.objects.filter(
-                        id=request.data["book"]).update(is_available=False)
+                    book.update(is_available=False)
                     serializer.save()
-                    return Response(serializer.data)
+                    return Response({
+                        "status":"success",
+                        "details":"request approved",
+                        "data":{
+                            "id":queryset1.id,
+                            "book":book_name.title,
+                            "is_approved":queryset1.is_approved
+                        }
+                        })
                 else:
                     Book.objects.filter(
-                        id=request.data["book"]).update(is_available=True)
+                        id=queryset1.book_id).update(is_available=True)
                     serializer.save()
-                    return Response(serializer.data)
+                    return Response({
+                        "status":"success",
+                        "details":"request unapproved",
+                        "data":{
+                            "id":queryset1.id,
+                            "book":book_name.title,
+                            "is_approved":queryset1.is_approved
+                        }
+                        })
             return Response({"Unsucessful": serializer.errors})
         except RequestBook.DoesNotExist:
             return Response({
                 "status":"failure",
                 "details":"Request id does not exist"
             })
+        except KeyError:
+            return Response({
+                "status":"failure",
+                "details":"is_approved required"
+            })
 
     def delete(self, request, pk ):
         """Delete Request from View API"""
-        queryset1 = RequestBook.objects.get(pk=pk)
-        queryset1.delete()
-        return Response({"Sucessfully Deleted": status.HTTP_204_NO_CONTENT})
+        try:
+            queryset1 = RequestBook.objects.get(pk=pk)
+            queryset1.delete()
+            return Response({
+                "status":"success",
+                "details":"request deleted"
+            })
+        except RequestBook.DoesNotExist:
+            return Response({
+                "status":"failure",
+                "details":"Request does not exist",
+            })
 
 
 class BookRequestView(generics.CreateAPIView):
@@ -130,15 +162,38 @@ class ReturnBookDetailView(generics.RetrieveAPIView, generics.UpdateAPIView):
             serializer = ReturnBookDetailSerializer(queryset1, data=request.data)
             if serializer.is_valid():
                 book = Book.objects.get(id=queryset1.book_id)
-                serializer.save()
+                if queryset1.is_approved:
+                    if serializer.validated_data["is_returned"] is True:
+                        serializer.save()
+                        return Response({
+                            "status":"success",
+                            "details":"book returned, waiting approval",
+                            "data":{
+                                "book":book.title,
+                                "is_returned":serializer.data["is_returned"]
+                            }
+                        })
+                    elif queryset1.is_approved_return:
+                        return Response({
+                            "status":"failure",
+                            "details":"book return already approved"
+                    })
+                    else:
+                        serializer.save()
+                        return Response({
+                            "status":"success",
+                            "details":"return retracted",
+                            "data":{
+                                "book":book.title,
+                                "is_returned":serializer.data["is_returned"]
+                            }
+                        })
+
                 return Response({
-                    "status":"success",
-                    "details":"book returned, waiting approval",
-                    "data":{
-                        "book":book.title,
-                        "is_returned":serializer.data["is_returned"]
-                    }
+                    "status":"failure",
+                    "details":"book not approved yet"
                 })
+
             return Response({"Unsucessful": serializer.errors})
         except RequestBook.DoesNotExist:
             return Response({
@@ -150,7 +205,7 @@ class AdminViewReturnBookView(generics.ListAPIView):
     """Admin User Return Book View. This shows all books requested by user
     and approved books and not Retuned"""
     queryset = RequestBook.objects.none()
-    serializer_class = AdminReturnBookSerializer
+    serializer_class = AdminApprovedButNotReturnedBook
     authentication_classes = (BasicAuthentication,)
     permission_classes = [IsAuthenticated,IsSuperUser]
 
@@ -172,25 +227,57 @@ class AdminViewReturnedBooksToApproveView(generics.ListAPIView,generics.UpdateAP
     """Admin User Return Book View. This shows all books requested by user
     and approved books and not Retuned"""
     queryset = RequestBook.objects.filter(is_approved = True,is_returned=True)
-    serializer_class = AdminReturnBookSerializer
+    serializer_class = AdminApprovedButNotReturnedBook
     authentication_classes = (BasicAuthentication,)
     permission_classes = [IsAuthenticated,IsSuperUser]
-    
+
 class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.UpdateAPIView):
     """Admin User Return Book View. This shows all books requested by user
     and approved books and not Retuned"""
     queryset = RequestBook.objects.filter(is_approved = True,is_returned=True)
-    serializer_class = AdminReturnBookSerializer
+    serializer_class = AdminApprovedButNotReturnedBook
     authentication_classes = (BasicAuthentication,)
     permission_classes = [IsAuthenticated,IsSuperUser]
-    
+
     def put(self, request, pk):
         """Put method for HTTP PUT request from RetunrBookDetailView for user to update that
         they want to return a book."""
-        queryset1 = RequestBook.objects.get(pk=pk)
-        serializer = AdminReturnBookSerializer(queryset1, request.data)
-        if serializer.is_valid():
-            Book.objects.filter(id=request.data["book"]).update(is_available=True)
-            serializer.save()
-            return Response(serializer.data)
-        return Response({"Unsucessful": serializer.errors})
+        try:
+            queryset1 = RequestBook.objects.get(pk=pk)
+            serializer = AdminReturnBookSerializer(queryset1, request.data)
+            if serializer.is_valid():
+                if serializer.validated_data["is_approved_return"]:
+                    Book.objects.filter(id=queryset1.book_id).update(is_available=True)
+                    serializer.save()
+                    return Response({
+                        "status":"success",
+                        "details":"book return approved",
+                        "data":{
+                            "id":queryset1.id,
+                            "is_approved": queryset1.is_approved,
+                            "is_returned":queryset1.is_returned,
+                            "is_approved_return":queryset1.is_approved_return,
+                        }
+                    })
+                else:
+                    Book.objects.filter(id=queryset1.book_id).update(is_available=False)
+                    serializer.save()
+                    return Response({
+                        "status":"success",
+                        "details":"book return disapproved",
+                        "data":{
+                            "id":queryset1.id,
+                            "is_approved": queryset1.is_approved,
+                            "is_returned":queryset1.is_returned,
+                            "is_approved_return":queryset1.is_approved_return,
+                        }
+                    })
+            return Response({
+                "status":"failure",
+                "details":serializer.errors
+            })
+        except RequestBook.DoesNotExist:
+            return Response({
+                "status":"failure",
+                "details":"request does not exist"
+            })

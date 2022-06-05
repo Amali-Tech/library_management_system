@@ -1,6 +1,6 @@
 """Catalogue serializer class"""
 from rest_framework import serializers
-from ..models import Book, Category
+from catalogue.models import Book, Category
 
 
 class BookSerializer(serializers.ModelSerializer):

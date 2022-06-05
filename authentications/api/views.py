@@ -4,9 +4,9 @@ import random
 import string
 
 from authentications.api.user_serializer import (
-    AdminUpdateSerializer, ChangePasswordSerializer,
-    GoogleSocialAuthSerializer, LibarianRegistrationSerializer,
-    LoginSerializer, RegistrationSerializer,AdminUpdateDetailSerializer)
+    AdminUpdateDetailSerializer, AdminUpdateSerializer,
+    ChangePasswordSerializer, GoogleSocialAuthSerializer,
+    LibarianRegistrationSerializer, LoginSerializer, RegistrationSerializer)
 from authentications.models import GeneratedPasswords, Users
 from django.contrib.auth import authenticate
 from rest_framework.authentication import BasicAuthentication
