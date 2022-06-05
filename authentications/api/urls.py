@@ -12,7 +12,7 @@ urlpatterns = [
     path("detail/", views.AuthUserAPIView.as_view(), name="user"),
     path("passwordchange/", views.ChangePasswordAPIView.as_view(), name="user"),
     path("list/", views.LibarianRegisterListView.as_view(), name="user_list"),
-    path("list/<pk>/", views.LibarianDetailView.as_view(), name="user_detail"),
+    path("list/<int:pk>/", views.LibarianDetailView.as_view(), name="user_detail"),
     path('google/', views.GoogleSocialAuthView.as_view()),
 
 ]

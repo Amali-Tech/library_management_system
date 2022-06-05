@@ -10,7 +10,7 @@ class TestSetup(APITestCase):
         self.admin_register_url = "/user/list/"
 
         self.user_data = {
-            "Email_Address":"test1@gmail.com",
+            "email_address":"test1@gmail.com",
             "username": "test1",
             "password": "test212",
         }

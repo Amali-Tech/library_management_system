@@ -19,6 +19,7 @@ from . import views
 app_name = "catalogue"
 urlpatterns = [
     path("books/",views.BookListView.as_view(),name = "book_list"),
+    path("admin/books/",views.AdminBookListView.as_view(),name = "admin_book_list"),
     path("books/<pk>/", views.BookDetailView.as_view(), name= "book_detail"),
     path("catalog/", views.CategoryView.as_view(), name = "category_list"),
     path("catalog/<pk>", views.CategoryDetailView.as_view(), name = "category_list"),

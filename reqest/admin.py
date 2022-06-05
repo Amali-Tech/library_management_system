@@ -8,4 +8,4 @@ from reqest.models import RequestBook
 
 class RequestAdmin(admin.ModelAdmin):
     """Registration of Request Book in Admin"""
-    list_display = ["user","book","request","approval"]
+    list_display = ["user","book","is_requested","is_approved"]
