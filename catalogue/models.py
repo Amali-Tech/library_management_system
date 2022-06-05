@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 class Category(models.Model):
     """Books category of the catalogue"""
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=200, unique=True)
 
     class Meta:

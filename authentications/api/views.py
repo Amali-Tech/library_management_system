@@ -6,7 +6,7 @@ import string
 from authentications.api.user_serializer import (
     AdminUpdateSerializer, ChangePasswordSerializer,
     GoogleSocialAuthSerializer, LibarianRegistrationSerializer,
-    LoginSerializer, RegistrationSerializer)
+    LoginSerializer, RegistrationSerializer,AdminUpdateDetailSerializer)
 from authentications.models import GeneratedPasswords, Users
 from django.contrib.auth import authenticate
 from rest_framework.authentication import BasicAuthentication
@@ -154,7 +154,7 @@ class ChangePasswordAPIView(UpdateAPIView):
                     "data": {
                         "Username":self.object.username,
                         "email_address":self.object.email_address,
-                        "is_libarian": self.object.is_superuser}})
+                        "libarian": self.object.is_superuser}})
             return Response({
                 "status": "failure",
                 "details": serializer.errors})
@@ -208,21 +208,39 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
             })
 
 
-class LibarianDetailView(RetrieveAPIView):
+class LibarianDetailView(RetrieveAPIView,UpdateAPIView):
     """Superuser checking the details of other users"""
     queryset = Users.objects.all()
-    serializer_class = AdminUpdateSerializer
+    serializer_class = AdminUpdateDetailSerializer
     authentication_classes = (BasicAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def put(self, request, pk):
+    def update(self, request, pk,*args, **kwargs):
         """Put method for superuser to control user accounts"""
         try:
-            queryset1 = Users.objects.get(pk=pk)
-            serializer = AdminUpdateSerializer(queryset1, request.data)
+            serializer = self.serializer_class(data = request.data)
+            print(serializer)
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
+                print(serializer.data)
+                queryset1 = Users.objects.filter(pk=pk)
+                if queryset1:
+                    queryset1.update(is_active = serializer.validated_data["is_active"])
+                    queryset2 = Users.objects.get(pk=pk)
+                    return Response({
+                        "status":"success",
+                        "details":"user status changed",
+                        "data":{
+                            "id":queryset2.id,
+                            "username":queryset2.email_address,
+                            "is_active":queryset2.is_active,
+                            "libarian":queryset2.is_superuser
+                            }
+                    })
+                else:
+                    return Response({
+                        "status":"failed",
+                        "details":"user not found"
+                    })
             else:
                 return Response({
                     "status":"failure",
@@ -279,4 +297,9 @@ class GoogleSocialAuthView(GenericAPIView):
             return Response({
                 "status":"failure",
                 "details":"Token fetch failed please check connection"
+            })
+        except ValueError:
+            return Response({
+                "status":"failure",
+                "details":"Token expired"
             })

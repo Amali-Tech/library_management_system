@@ -1,5 +1,6 @@
 """Authentication Serializer module file"""
 from django.forms import ValidationError
+from httplib2 import Response
 from rest_framework import serializers
 
 from . import google
@@ -31,7 +32,15 @@ class AdminUpdateSerializer(serializers.ModelSerializer):
             "is_active",
             "is_superuser"
         ]
+class AdminUpdateDetailSerializer(serializers.ModelSerializer):
+    """User Registration Serializer"""
 
+    class Meta:
+        """Pre display all fields except password field since it is write only"""
+        model = Users
+        fields = [
+            "is_active",
+        ]
 class LibarianRegistrationSerializer(serializers.ModelSerializer):
     """Libarian Registration Serializer"""
 
@@ -81,8 +90,15 @@ class GoogleSocialAuthSerializer(serializers.Serializer):
         try:
             user_data['sub']
         except ValidationError:
-            raise serializers.ValidationError(
-                'The token is invalid or expired. Please login again.')
+            return Response({
+                "status":"failure",
+                "details":"Token expired"
+            })
+        except ValueError:
+            return Response({
+                "status":"failure",
+                "details":"Token expired"
+            })
         email = user_data['email']
         name = user_data['name']
         return register_social_user(

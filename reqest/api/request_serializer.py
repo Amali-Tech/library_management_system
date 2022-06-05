@@ -29,7 +29,7 @@ class RequestBookListSerializer(serializers.ModelSerializer):
         """Modeling from the Request Book model class"""
         model = RequestBook
         fields = ["id", "user", "book",
-                  "is_requested", "is_approved", "returned"]
+                  "is_requested", "is_approved", "is_returned"]
 
 
 class ReturnBookSerializer(serializers.ModelSerializer):
@@ -38,6 +38,15 @@ class ReturnBookSerializer(serializers.ModelSerializer):
         """Pre displayed for user to see and update"""
         model = RequestBook
         fields = ["id", "book", "is_approved", "is_returned"]
+
+class ReturnBookGetSerializer(serializers.ModelSerializer):
+    """User return book serializer class"""
+    book = serializers.ReadOnlyField(source = "book.title")
+    class Meta:
+        """Pre displayed for user to see and update"""
+        model = RequestBook
+        fields = ["id", "book", "is_approved", "is_returned"]
+
 
 class AdminReturnBookSerializer(serializers.ModelSerializer):
     """Admin checking returned books to approve serializer class"""
@@ -49,6 +58,14 @@ class AdminReturnBookSerializer(serializers.ModelSerializer):
 
 class ReturnBookDetailSerializer(serializers.ModelSerializer):
     """User Return Book view"""
+    class Meta:
+        model = RequestBook
+        fields = ["is_returned"]
+
+
+class ReturnBookDetailGetSerializer(serializers.ModelSerializer):
+    """User Return Book view"""
+    book = serializers.ReadOnlyField(source = "book.title")
     class Meta:
         model = RequestBook
         fields = ["id", "book", "is_returned"]

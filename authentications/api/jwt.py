@@ -1,4 +1,5 @@
 """JWT Token Authentication for user login"""
+from httplib2 import Response
 import jwt
 from rest_framework import exceptions
 from rest_framework.authentication import get_authorization_header, BaseAuthentication
@@ -23,11 +24,16 @@ class JWTBaseAuthentication(BaseAuthentication):
             user = Users.objects.get(username=username)
             return (user, token)
 
-        except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed("Token Expired, login again")
+        except jwt.ExpiredSignatureError as exc:
+            raise exceptions.AuthenticationFailed("Token Expired, login again") from exc
 
-        except jwt.DecodeError:
-            raise exceptions.AuthenticationFailed("Token is invalid")
+        except jwt.DecodeError as exc:
+            raise exceptions.AuthenticationFailed("Token is invalid") from exc
 
-        except Users.DoesNotExist:
-            raise exceptions.AuthenticationFailed("No such user")
+        except Users.DoesNotExist as exc:
+            raise exceptions.AuthenticationFailed("No such user") from exc
+        except ValueError:
+            return Response({
+                "status":"failure",
+                "details":"Token expired"
+            })

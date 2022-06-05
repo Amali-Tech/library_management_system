@@ -1,6 +1,6 @@
 """Book Request URLS file"""
 from django.urls import path
-from . import views
+from reqest.api import views
 
 
 app_name = "catalogue"
