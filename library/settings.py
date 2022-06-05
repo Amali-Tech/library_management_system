@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "rest_framework_swagger",
     'catalogue.apps.CatalogueConfig',
     'rest_framework',
     "rest_framework.authtoken",
@@ -49,7 +48,6 @@ INSTALLED_APPS = [
     "reqest.apps.ReqestConfig",
     "django_rest_passwordreset",
     'dj_rest_auth',
-    'drf_yasg',
 ]
 
 
