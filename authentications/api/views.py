@@ -30,6 +30,7 @@ class AuthUserAPIView(GenericAPIView):
     """When user logs in with a token, their identity can be determines"""
 
     permission_classes = (IsAuthenticated,)
+    serializer_class = RegistrationSerializer
 
     def get(self, request):
         """Getting the current logged in user info"""
