@@ -56,7 +56,7 @@ class Users(AbstractBaseUser):
         ordering = ("email_address",)
 
     def __str__(self):
-        return f"{self.email_address}, {self.username}"
+        return f"{self.email_address}"
 
     def has_perm(self, perm, obj=None):
         """When user registraion has permission, then it is a superuser"""

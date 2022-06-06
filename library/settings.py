@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "rest_framework_swagger",
     'catalogue.apps.CatalogueConfig',
     'rest_framework',
     "rest_framework.authtoken",
@@ -49,7 +48,7 @@ INSTALLED_APPS = [
     "reqest.apps.ReqestConfig",
     "django_rest_passwordreset",
     'dj_rest_auth',
-    'drf_yasg',
+    
 ]
 
 
@@ -93,10 +92,12 @@ WSGI_APPLICATION = 'library.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'library1',
-        'USER': 'postgres',
-        'PASSWORD': os.getenv('DATABASE_PASSWORD')
-
+        'NAME': os.getenv('POSTGRES_DATABASE_NAME'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_DATABASE_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_DATABASE_HOST'),
+        'PORT': '',
+        'ATOMIC_REQUESTS': True,
     }
 }
 
@@ -145,6 +146,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
         'authentications.api.jwt.JWTBaseAuthentication',
     ],
 }

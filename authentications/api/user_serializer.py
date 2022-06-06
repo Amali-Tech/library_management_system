@@ -1,11 +1,10 @@
 """Authentication Serializer module file"""
+from authentications.api import google
+from authentications.api.register import register_social_user
+from authentications.models import Users
 from django.forms import ValidationError
 from httplib2 import Response
 from rest_framework import serializers
-
-from . import google
-from ..models import Users
-from .register import register_social_user
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

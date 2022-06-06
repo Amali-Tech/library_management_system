@@ -1,6 +1,6 @@
 """Admin class for testing models"""
 from django.contrib import admin
-from .models import Category, Book
+from catalogue.models import Category, Book
 # Register your models here.
 
 
@@ -15,6 +15,6 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     """Registering Book model class as Admin model"""
-    list_display = ("category", "title", "slug", "is_available",)
+    list_display = ("category", "title", "is_available",)
     list_filter = ["title"]
     prepopulated_fields = {"slug": ("title",)}
