@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "drf_yasg",
     'catalogue.apps.CatalogueConfig',
     'rest_framework',
     "rest_framework.authtoken",
@@ -145,10 +146,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
-        'authentications.api.jwt.JWTBaseAuthentication',
-    ],
+
 }
 
 AUTH_USER_MODEL = 'authentications.Users'

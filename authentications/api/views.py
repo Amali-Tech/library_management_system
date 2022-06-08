@@ -14,7 +14,7 @@ from rest_framework.generics import (GenericAPIView, ListAPIView,
                                      RetrieveAPIView, UpdateAPIView)
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework import status
 from google.auth.exceptions import TransportError
 
 
@@ -63,10 +63,10 @@ class RegisterAPIView(GenericAPIView):
                 "details":"User created successfully",
                 "data":{
                     "email_address":serializers.data["email_address"],
-                    "username":serializers.data["username"]}})
+                    "username":serializers.data["username"]}}, status=status.HTTP_201_CREATED)
         return Response({
             "status":"failure",
-            "details":serializers.errors})
+            "details":serializers.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginAPIView(GenericAPIView):
@@ -87,14 +87,14 @@ class LoginAPIView(GenericAPIView):
                     return Response({
                     "status":"failure",
                     "details":"Change Password"
-                })
+                }, status=status.HTTP_400_BAD_REQUEST)
             except GeneratedPasswords.DoesNotExist:
                 pass
         except KeyError:
             return Response({
                 "status":"failure",
                 "details":"Email and password fields required"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = authenticate(email_address=email_address, password=password)
@@ -105,15 +105,15 @@ class LoginAPIView(GenericAPIView):
                     "data":{
                         "email_address":user.email_address,
                         "token":user.token,
-                        "libarian":user.is_superuser}})
+                        "libarian":user.is_superuser}}, status=status.HTTP_200_OK)
             return Response({
                 "status":"failure",
-                "details":"Invalid credentials"})
+                "details":"Invalid credentials"}, status=status.HTTP_403_FORBIDDEN)
         except Users.DoesNotExist:
             return Response({
                 "status":"failure",
                 "details":"User does not exits"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
 
 
 class ChangePasswordAPIView(UpdateAPIView):
@@ -139,7 +139,8 @@ class ChangePasswordAPIView(UpdateAPIView):
                 if not self.object.check_password(serializer.data.get("old_password")):
                     return Response({
                         "status": "Wrong old password",
-                        "details": "Password change unsuccessful"})
+                        "details": "Password change unsuccessful"},
+                        status=status.HTTP_400_BAD_REQUEST)
                 self.object.set_password(serializer.data.get("new_password"))
                 self.object.save()
                 try:
@@ -154,15 +155,17 @@ class ChangePasswordAPIView(UpdateAPIView):
                     "data": {
                         "username":self.object.username,
                         "email_address":self.object.email_address,
-                        "libarian": self.object.is_superuser}})
+                        "libarian": self.object.is_superuser}},
+                        status=status.HTTP_200_OK)
             return Response({
                 "status": "failure",
-                "details": serializer.errors})
+                "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST)
         except KeyError:
             return Response({
                 "status":"failure",
                 "details":"change password failed"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LibarianRegisterListView(ListAPIView, GenericAPIView):
@@ -201,11 +204,12 @@ class LibarianRegisterListView(ListAPIView, GenericAPIView):
                 "data": {
                     "username": serializer.data["username"],
                     "email_address": serializer.data["email_address"],
-                    "password": password}})
+                    "password": password}},
+                    status=status.HTTP_201_CREATED)
         return Response({
             "status": "failure",
             "details": serializer.errors
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LibarianDetailView(RetrieveAPIView,UpdateAPIView):
@@ -233,20 +237,22 @@ class LibarianDetailView(RetrieveAPIView,UpdateAPIView):
                             "is_active":queryset2.is_active,
                             "libarian":queryset2.is_superuser
                             }
-                    })
+                    }, status=status.HTTP_200_OK)
                 else:
                     return Response({
                         "status":"failed",
                         "details":"user not found"
-                    })
+                    }, status=status.HTTP_204_NO_CONTENT)
             else:
                 return Response({
                     "status":"failure",
-                    "details":serializer.errors})
+                    "details":serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST)
         except Users.DoesNotExist:
             return Response({
                 "status":"failure",
-                "details":"User not found"})
+                "details":"User not found"},
+                status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, reqest, pk):
         """Delete User from database API"""
@@ -256,11 +262,12 @@ class LibarianDetailView(RetrieveAPIView,UpdateAPIView):
             return Response({
                 "status": "success",
                 "details": "User deleted successfully",
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
         except Users.DoesNotExist:
             return Response({
                 "status":"failure",
-                "datails":"User does not exist"})
+                "datails":"User does not exist"},
+                status=status.HTTP_204_NO_CONTENT)
 
 
 class GoogleSocialAuthView(GenericAPIView):
@@ -285,19 +292,20 @@ class GoogleSocialAuthView(GenericAPIView):
                 "data":{
                 "username": data["username"],
                 "email_address":data["email"],
-                "token":data["token"]}})
+                "token":data["token"]}},
+                status=status.HTTP_201_CREATED)
         except KeyError:
             return Response({
                 "status":"failure",
                 "details":"invalid token"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
         except TransportError:
             return Response({
                 "status":"failure",
                 "details":"Token fetch failed please check connection"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
         except ValueError:
             return Response({
                 "status":"failure",
                 "details":"Token expired"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)

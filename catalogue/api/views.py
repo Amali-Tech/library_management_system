@@ -72,17 +72,17 @@ class BookDetailView(generics.RetrieveAPIView):
                         "is_available": serializer.data["is_available"],
                         "image": serializer.data["image"]
                     }
-                })
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({
                     "status": "failure",
                     "details": serializer.errors
-                })
+                }, status=status.HTTP_400_BAD_REQUEST)
         except Book.DoesNotExist:
             return Response({
                 "status": "failure",
                 "details": "book does not exist"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request, pk):
         """Delete Book from catalog View API"""
@@ -92,12 +92,12 @@ class BookDetailView(generics.RetrieveAPIView):
             return Response({
                 "status": "success",
                 "details":"book deleted"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
         except Book.DoesNotExist:
             return Response({
                 "status": "failure",
                 "details": "book does not exist"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
 
 
 class CategoryView(generics.ListAPIView):
@@ -118,10 +118,11 @@ class CategoryView(generics.ListAPIView):
                 "data": {
                     "id": serializer.data["id"],
                     "name": serializer.data["name"]
-                }})
+                }}, status=status.HTTP_201_CREATED)
         return Response({
             "status": "failure",
-            "details": serializer.errors})
+            "details": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryDetailView(generics.RetrieveAPIView):
@@ -145,18 +146,18 @@ class CategoryDetailView(generics.RetrieveAPIView):
                         "id": serializer.data["id"],
                         "name": serializer.data["name"]
                     }
-                })
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({
                     "status": "failure",
                     "details": serializer.errors
-                })
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         except Category.DoesNotExist:
             return Response({
                 "status": "failure",
                 "details": "category does not exist"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request, pk):
         """Delete Catalogue from catalog View API with ID"""
@@ -165,9 +166,10 @@ class CategoryDetailView(generics.RetrieveAPIView):
             querry.delete()
             return Response({
                 "status": "success",
-                "details":"category deleted"})
+                "details":"category deleted"},
+                status=status.HTTP_204_NO_CONTENT)
         except Category.DoesNotExist:
             return Response({
                 "status": "failure",
                 "details": "category does not exit"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)

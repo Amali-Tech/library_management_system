@@ -54,7 +54,7 @@ class RequestBookDetailView(generics.RetrieveAPIView, generics.ListAPIView):
                             "book":book_name.title,
                             "is_approved":queryset1.is_approved
                         }
-                        })
+                        }, status=status.HTTP_200_OK)
                 else:
                     Book.objects.filter(
                         id=queryset1.book_id).update(is_available=True)
@@ -67,18 +67,21 @@ class RequestBookDetailView(generics.RetrieveAPIView, generics.ListAPIView):
                             "book":book_name.title,
                             "is_approved":queryset1.is_approved
                         }
-                        })
-            return Response({"Unsucessful": serializer.errors})
+                        }, status=status.HTTP_200_OK)
+            return Response({
+                "status":"failure",
+                "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST)
         except RequestBook.DoesNotExist:
             return Response({
                 "status":"failure",
                 "details":"Request id does not exist"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
         except KeyError:
             return Response({
                 "status":"failure",
                 "details":"is_approved required"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk ):
         """Delete Request from View API"""
@@ -88,12 +91,12 @@ class RequestBookDetailView(generics.RetrieveAPIView, generics.ListAPIView):
             return Response({
                 "status":"success",
                 "details":"request deleted"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
         except RequestBook.DoesNotExist:
             return Response({
                 "status":"failure",
                 "details":"Request does not exist",
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
 
 
 class BookRequestView(generics.CreateAPIView):
@@ -118,11 +121,11 @@ class BookRequestView(generics.CreateAPIView):
                         "data": {
                             "id":book.id,
                             "title": book.title,
-                        }})
+                        }}, status=status.HTTP_201_CREATED)
                 return Response({
                 "status":"failure",
                 "details":"book not available"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
             return Response({
                     "status":"failure",
                     "details":serializers.errors
@@ -131,7 +134,7 @@ class BookRequestView(generics.CreateAPIView):
             return Response({
                 "status":"failure",
                 "details":"enter a valid book"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
 
 class ReturnBookView(generics.ListAPIView):
     """User Return Book View. This shows all books requested by user
@@ -172,12 +175,12 @@ class ReturnBookDetailView(generics.RetrieveAPIView, generics.UpdateAPIView):
                                 "book":book.title,
                                 "is_returned":serializer.data["is_returned"]
                             }
-                        })
+                        }, status=status.HTTP_200_OK)
                     elif queryset1.is_approved_return:
                         return Response({
                             "status":"failure",
                             "details":"book return already approved"
-                    })
+                    }, status=status.HTTP_400_BAD_REQUEST)
                     else:
                         serializer.save()
                         return Response({
@@ -187,19 +190,19 @@ class ReturnBookDetailView(generics.RetrieveAPIView, generics.UpdateAPIView):
                                 "book":book.title,
                                 "is_returned":serializer.data["is_returned"]
                             }
-                        })
+                        }, status=status.HTTP_200_OK)
 
                 return Response({
                     "status":"failure",
                     "details":"book not approved yet"
-                })
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({"Unsucessful": serializer.errors})
         except RequestBook.DoesNotExist:
             return Response({
                 "status":"failure",
                 "details":"request does not exist"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class AdminViewReturnBookView(generics.ListAPIView):
     """Admin User Return Book View. This shows all books requested by user
@@ -258,7 +261,7 @@ class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.Up
                             "is_returned":queryset1.is_returned,
                             "is_approved_return":queryset1.is_approved_return,
                         }
-                    })
+                    }, status=status.HTTP_200_OK)
                 else:
                     Book.objects.filter(id=queryset1.book_id).update(is_available=False)
                     serializer.save()
@@ -271,13 +274,13 @@ class AdminViewReturnedBooksToApproveDetailView(generics.ListAPIView,generics.Up
                             "is_returned":queryset1.is_returned,
                             "is_approved_return":queryset1.is_approved_return,
                         }
-                    })
+                    }, status=status.HTTP_200_OK)
             return Response({
                 "status":"failure",
                 "details":serializer.errors
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
         except RequestBook.DoesNotExist:
             return Response({
                 "status":"failure",
                 "details":"request does not exist"
-            })
+            }, status=status.HTTP_204_NO_CONTENT)
